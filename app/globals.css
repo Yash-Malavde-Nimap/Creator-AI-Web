@@ -1,26 +1,208 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── SocialBeat Design Tokens ─────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Switzer', system-ui, sans-serif;
+  --font-mono: 'Switzer', monospace;
+
+  /* Brand – deep navy background */
+  --color-sb-bg: #050d1f;
+  --color-sb-bg-2: #040b18;
+
+  /* Brand gradient (logo, CTA button) */
+  --color-sb-cyan: #00d4ff;
+  --color-sb-blue: #4a9fd5;
+  --color-sb-gold: #e8a020;
+  --color-sb-orange: #f5a623;
+
+  /* Text */
+  --color-sb-text: #ffffff;
+  --color-sb-muted: rgba(255, 255, 255, 0.62);
+
+  /* Input */
+  --color-sb-input-bg: rgba(16, 34, 76, 0.65);
+  --color-sb-input-border: rgba(100, 150, 220, 0.25);
+  --color-sb-input-focus: rgba(74, 159, 213, 0.5);
+
+  /* Card / plan card */
+  --color-sb-card: rgba(16, 32, 72, 0.55);
+  --color-sb-card-border: rgba(100, 150, 220, 0.2);
+
+  /* Primary palette (kept from v1 for admin routes) */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+  --color-primary-950: #1e1b4b;
+
+  --color-secondary-50: #f8fafc;
+  --color-secondary-100: #f1f5f9;
+  --color-secondary-200: #e2e8f0;
+  --color-secondary-300: #cbd5e1;
+  --color-secondary-400: #94a3b8;
+  --color-secondary-500: #64748b;
+  --color-secondary-600: #475569;
+  --color-secondary-700: #334155;
+  --color-secondary-800: #1e293b;
+  --color-secondary-900: #0f172a;
+  --color-secondary-950: #020617;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ───────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+}
+
+/* ── SocialBeat CTA gradient button ──────────────────────────────────────── */
+.sb-btn-gradient {
+  background: linear-gradient(90deg, #4a9fd5 0%, #e8a020 100%);
+  border: none;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
+}
+.sb-btn-gradient:hover {
+  opacity: 0.92;
+}
+.sb-btn-gradient:active {
+  transform: scale(0.98);
+}
+
+/* ── SocialBeat dark pill button ────────────────────────────────────────── */
+.sb-btn-dark {
+  background: rgba(10, 22, 55, 0.85);
+  border: 1.5px solid rgba(100, 150, 220, 0.22);
+  transition:
+    background 0.2s,
+    transform 0.1s;
+}
+.sb-btn-dark:hover {
+  background: rgba(18, 36, 80, 0.9);
+}
+.sb-btn-dark:active {
+  transform: scale(0.98);
+}
+
+/* ── SocialBeat dark input ──────────────────────────────────────────────── */
+.sb-input {
+  background: rgba(16, 34, 76, 0.65);
+  border: 1.5px solid rgba(100, 150, 220, 0.25);
+  color: #ffffff;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.sb-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+.sb-input:focus {
+  border-color: rgba(74, 159, 213, 0.55);
+  box-shadow: 0 0 0 3px rgba(74, 159, 213, 0.15);
+}
+
+/* ── Plan card selection ────────────────────────────────────────────────── */
+.sb-plan-card {
+  background: rgba(16, 32, 72, 0.55);
+  border: 1.5px solid rgba(100, 150, 220, 0.2);
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.sb-plan-card.selected {
+  border-color: rgba(74, 159, 213, 0.6);
+  background: rgba(20, 42, 100, 0.65);
+}
+
+/* ── Gradient text utility ─────────────────────────────────────────────── */
+.sb-gradient-text {
+  background: linear-gradient(90deg, #4a9fd5 0%, #e8a020 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 150, 220, 0.3);
+  border-radius: 9999px;
+}
+
+/* ── Focus visible ─────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(74, 159, 213, 0.7);
+  outline-offset: 2px;
+}
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes blob-morph {
+  0%,
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  25% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+  50% {
+    border-radius: 50% 60% 30% 60% / 40% 50% 60% 50%;
+  }
+  75% {
+    border-radius: 70% 30% 50% 40% / 60% 40% 30% 50%;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(-6px) rotate(-2deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes dot-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

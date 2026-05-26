@@ -1,0 +1,81 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+
+import { BottomNextButton } from '@/components/onboarding/OnboardingButtons';
+import { OnboardingInput } from '@/components/onboarding/OnboardingInput';
+import { SocialBeatLogo } from '@/components/onboarding/SocialBeatLogo';
+import { useForgotPassword } from '@/features/auth/hooks/useForgotPassword';
+import { forgotPasswordSchema, ForgotPasswordFormValues } from '@/validations/auth.validation';
+
+export default function ForgotPasswordPage() {
+  const { mutate: sendReset, isPending, error } = useForgotPassword();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: '' },
+  });
+
+  const onSubmit = (data: ForgotPasswordFormValues) => sendReset(data);
+  const apiError = error as { message?: string } | null;
+
+  return (
+    <>
+      <div className="flex min-h-screen flex-col items-center px-6 pb-28 pt-14">
+        <div className="flex w-full max-w-sm flex-col items-center">
+          <SocialBeatLogo />
+
+          <h1 className="mt-10 text-center text-[26px] font-extrabold leading-tight text-white">
+            Forgot Password?
+          </h1>
+          <p className="mt-3 text-center text-sm leading-relaxed text-white/60">
+            Don&apos;t worry, enter your email id
+            <br />
+            to reset your password.
+          </p>
+
+          {apiError?.message && (
+            <div
+              className="mt-6 w-full rounded-2xl px-4 py-3 text-sm text-red-300"
+              style={{ background: 'rgba(200,50,50,0.15)', border: '1px solid rgba(200,50,50,0.3)' }}
+            >
+              {apiError.message}
+            </div>
+          )}
+
+          <form
+            id="forgot-form"
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="mt-8 w-full"
+          >
+            <p className="mb-2 text-base font-semibold text-white">Enter your email id</p>
+            <OnboardingInput
+              type="email"
+              placeholder="email id"
+              autoComplete="email"
+              inputMode="email"
+              error={errors.email?.message}
+              {...register('email')}
+            />
+          </form>
+        </div>
+      </div>
+
+      <BottomNextButton
+        loading={isPending}
+        onClick={() => {
+          const form = document.getElementById('forgot-form') as HTMLFormElement | null;
+          form?.requestSubmit();
+        }}
+      >
+        Next
+      </BottomNextButton>
+    </>
+  );
+}
