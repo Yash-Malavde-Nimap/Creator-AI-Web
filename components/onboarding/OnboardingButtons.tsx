@@ -52,20 +52,29 @@ export function DarkButton({ loading, className, children, ...props }: DarkButto
 export function BottomNextButton({
   loading,
   disabled,
+  active,
   onClick,
   children = 'Next',
 }: {
   loading?: boolean;
   disabled?: boolean;
+  active?: boolean;
   onClick?: () => void;
   children?: React.ReactNode;
 }) {
+  const isActive = active && !disabled;
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-6 pb-8 pt-4">
       <div className="w-full max-w-sm">
-        <DarkButton loading={loading} disabled={disabled} onClick={onClick}>
-          {children}
-        </DarkButton>
+        {isActive ? (
+          <GradientButton loading={loading} onClick={onClick}>
+            {children}
+          </GradientButton>
+        ) : (
+          <DarkButton loading={loading} disabled={disabled} onClick={onClick}>
+            {children}
+          </DarkButton>
+        )}
       </div>
     </div>
   );

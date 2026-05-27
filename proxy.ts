@@ -9,6 +9,7 @@ export function proxy(request: NextRequest) {
   // Read access token from cookies (set by the auth flow for SSR support)
   const token = request.cookies.get(STORAGE_KEYS.ACCESS_TOKEN)?.value;
   const isAuthenticated = Boolean(token);
+  // const isAuthenticated = true;
 
   const isPublicRoute = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)

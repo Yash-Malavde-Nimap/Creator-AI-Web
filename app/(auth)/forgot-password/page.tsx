@@ -1,13 +1,13 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
 import { BottomNextButton } from '@/components/onboarding/OnboardingButtons';
 import { OnboardingInput } from '@/components/onboarding/OnboardingInput';
 import { SocialBeatLogo } from '@/components/onboarding/SocialBeatLogo';
+import { forgotPasswordConfig } from '@/config/forms.config';
 import { useForgotPassword } from '@/features/auth/hooks/useForgotPassword';
-import { forgotPasswordSchema, ForgotPasswordFormValues } from '@/validations/auth.validation';
+import type { ForgotPasswordFormValues } from '@/types/forms.types';
 
 export default function ForgotPasswordPage() {
   const { mutate: sendReset, isPending, error } = useForgotPassword();
@@ -15,11 +15,8 @@ export default function ForgotPasswordPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotPasswordFormValues>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' },
-  });
+    formState: { errors, isValid },
+  } = useForm<ForgotPasswordFormValues>({ defaultValues: forgotPasswordConfig.defaultValues, mode: 'onChange' });
 
   const onSubmit = (data: ForgotPasswordFormValues) => sendReset(data);
   const apiError = error as { message?: string } | null;
@@ -54,14 +51,14 @@ export default function ForgotPasswordPage() {
             noValidate
             className="mt-8 w-full"
           >
-            <p className="mb-2 text-base font-semibold text-white">Enter your email id</p>
             <OnboardingInput
+              label="Enter your email id"
               type="email"
-              placeholder="email id"
+              placeholder="Email id"
               autoComplete="email"
               inputMode="email"
               error={errors.email?.message}
-              {...register('email')}
+              {...register('email', forgotPasswordConfig.rules.email)}
             />
           </form>
         </div>
@@ -69,6 +66,7 @@ export default function ForgotPasswordPage() {
 
       <BottomNextButton
         loading={isPending}
+        active={isValid}
         onClick={() => {
           const form = document.getElementById('forgot-form') as HTMLFormElement | null;
           form?.requestSubmit();

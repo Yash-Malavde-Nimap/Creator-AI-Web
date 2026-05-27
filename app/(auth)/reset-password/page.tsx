@@ -1,6 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -8,8 +7,9 @@ import { useForm } from 'react-hook-form';
 import { BottomNextButton } from '@/components/onboarding/OnboardingButtons';
 import { OnboardingInput } from '@/components/onboarding/OnboardingInput';
 import { SocialBeatLogo } from '@/components/onboarding/SocialBeatLogo';
+import { resetPasswordConfig } from '@/config/forms.config';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
-import { resetPasswordSchema, ResetPasswordFormValues } from '@/validations/auth.validation';
+import type { ResetPasswordFormValues } from '@/types/forms.types';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -36,11 +36,8 @@ export default function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { password: '', confirmPassword: '' },
-  });
+    formState: { errors, isValid },
+  } = useForm<ResetPasswordFormValues>({ defaultValues: resetPasswordConfig.defaultValues, mode: 'onChange' });
 
   const onSubmit = (data: ResetPasswordFormValues) => reset({ token, ...data });
   const apiError = error as { message?: string } | null;
@@ -76,10 +73,10 @@ export default function ResetPasswordPage() {
             className="mt-8 flex w-full flex-col gap-5"
           >
             <div>
-              <p className="mb-2 text-base font-semibold text-white">Enter new password</p>
               <OnboardingInput
+                label="Enter new password"
                 type={showPw ? 'text' : 'password'}
-                placeholder="password"
+                placeholder="Password"
                 autoComplete="new-password"
                 error={errors.password?.message}
                 rightSlot={
@@ -92,15 +89,15 @@ export default function ResetPasswordPage() {
                     <EyeIcon open={showPw} />
                   </button>
                 }
-                {...register('password')}
+                {...register('password', resetPasswordConfig.rules.password)}
               />
             </div>
 
             <div>
-              <p className="mb-2 text-base font-semibold text-white">Confirm new password</p>
               <OnboardingInput
+                label="Confirm new password"
                 type={showConfirm ? 'text' : 'password'}
-                placeholder="confirm password"
+                placeholder="Confirm password"
                 autoComplete="new-password"
                 error={errors.confirmPassword?.message}
                 rightSlot={
@@ -113,7 +110,7 @@ export default function ResetPasswordPage() {
                     <EyeIcon open={showConfirm} />
                   </button>
                 }
-                {...register('confirmPassword')}
+                {...register('confirmPassword', resetPasswordConfig.rules.confirmPassword)}
               />
             </div>
           </form>
@@ -122,6 +119,7 @@ export default function ResetPasswordPage() {
 
       <BottomNextButton
         loading={isPending}
+        active={isValid}
         onClick={() => {
           const form = document.getElementById('reset-form') as HTMLFormElement | null;
           form?.requestSubmit();

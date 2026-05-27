@@ -1,14 +1,14 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
 import { BottomNextButton } from '@/components/onboarding/OnboardingButtons';
 import { OnboardingInput } from '@/components/onboarding/OnboardingInput';
 import { SocialBeatLogo } from '@/components/onboarding/SocialBeatLogo';
+import { otpConfig } from '@/config/forms.config';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
-import { otpSchema, OtpFormValues } from '@/validations/auth.validation';
+import type { OtpFormValues } from '@/types/forms.types';
 
 export default function VerifyOtpPage() {
   const searchParams = useSearchParams();
@@ -20,10 +20,7 @@ export default function VerifyOtpPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<OtpFormValues>({
-    resolver: zodResolver(otpSchema),
-    defaultValues: { code: '' },
-  });
+  } = useForm<OtpFormValues>({ defaultValues: otpConfig.defaultValues });
 
   const onSubmit = (data: OtpFormValues) => verify({ email, code: data.code });
   const apiError = error as { message?: string } | null;
@@ -58,15 +55,15 @@ export default function VerifyOtpPage() {
             noValidate
             className="mt-8 w-full"
           >
-            <p className="mb-2 text-base font-semibold text-white">Enter the 6-digit code</p>
             <OnboardingInput
+              label="Enter the 6-digit code"
               type="text"
               placeholder="6-digit code"
               autoComplete="one-time-code"
               inputMode="numeric"
               maxLength={6}
               error={errors.code?.message}
-              {...register('code')}
+              {...register('code', otpConfig.rules.code)}
             />
           </form>
         </div>

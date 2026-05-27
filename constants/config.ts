@@ -9,10 +9,10 @@ export const APP_CONFIG = {
 } as const;
 
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'creator_ai_access_token',
-  REFRESH_TOKEN: 'creator_ai_refresh_token',
-  USER: 'creator_ai_user',
-  THEME: 'creator_ai_theme',
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
+  USER: 'user',
+  THEME: 'theme',
 } as const;
 
 export const QUERY_KEYS = {

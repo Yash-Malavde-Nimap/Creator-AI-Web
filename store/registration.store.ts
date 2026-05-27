@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-export type RegistrationStep = 1 | 2 | 3 | 4;
-
 interface RegistrationData {
   name: string;
   countryCode: string;
@@ -12,23 +10,12 @@ interface RegistrationData {
 }
 
 interface RegistrationStore extends RegistrationData {
-  step: RegistrationStep;
-
-  setStep: (step: RegistrationStep) => void;
-  setName: (name: string) => void;
-  setPhone: (phone: string, countryCode?: string) => void;
-  setEmail: (email: string) => void;
-  setPassword: (password: string) => void;
-  nextStep: () => void;
-  prevStep: () => void;
+  setRegistrationData: (data: Partial<RegistrationData>) => void;
   reset: () => void;
   getData: () => RegistrationData;
 }
 
-const initialState: Omit<RegistrationStore, keyof Pick<RegistrationStore,
-  'setStep' | 'setName' | 'setPhone' | 'setEmail' | 'setPassword' |
-  'nextStep' | 'prevStep' | 'reset' | 'getData'>> = {
-  step: 1,
+const initialState: RegistrationData = {
   name: '',
   countryCode: '+1',
   phone: '',
@@ -41,26 +28,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
     (set, get) => ({
       ...initialState,
 
-      setStep: (step) => set({ step }),
-
-      setName: (name) => set({ name }),
-
-      setPhone: (phone, countryCode) =>
-        set((state) => ({ phone, countryCode: countryCode ?? state.countryCode })),
-
-      setEmail: (email) => set({ email }),
-
-      setPassword: (password) => set({ password }),
-
-      nextStep: () =>
-        set((state) => ({
-          step: Math.min(state.step + 1, 4) as RegistrationStep,
-        })),
-
-      prevStep: () =>
-        set((state) => ({
-          step: Math.max(state.step - 1, 1) as RegistrationStep,
-        })),
+      setRegistrationData: (data) => set((state) => ({ ...state, ...data })),
 
       reset: () => set(initialState),
 

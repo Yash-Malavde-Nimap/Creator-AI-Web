@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from '@/constants/api';
 import { STORAGE_KEYS } from '@/constants/config';
-import { api } from '@/services/api';
+import { privateRequest } from '@/services/privateRequest';
+import { publicRequest } from '@/services/publicRequest';
 import type {
   AuthTokens,
   ForgotPasswordPayload,
@@ -12,26 +13,31 @@ import type {
 } from '@/types/auth.types';
 
 export const authService = {
+  // ── Public endpoints (no token required) ─────────────────────────────────
   login: (credentials: LoginCredentials) =>
-    api.post<{ user: User; tokens: AuthTokens }>(API_ENDPOINTS.AUTH.LOGIN, credentials),
+    publicRequest.post<{ user: User; tokens: AuthTokens }>(API_ENDPOINTS.AUTH.LOGIN, credentials),
 
   register: (credentials: RegisterCredentials) =>
-    api.post<{ user: User; tokens: AuthTokens }>(API_ENDPOINTS.AUTH.REGISTER, credentials),
-
-  logout: () => api.post(API_ENDPOINTS.AUTH.LOGOUT),
-
-  getMe: () => api.get<User>(API_ENDPOINTS.AUTH.ME),
+    publicRequest.post<{ user: User; tokens: AuthTokens }>(
+      API_ENDPOINTS.AUTH.REGISTER,
+      credentials
+    ),
 
   forgotPassword: (payload: ForgotPasswordPayload) =>
-    api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, payload),
+    publicRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, payload),
 
   verifyOtp: (payload: VerifyOtpPayload) =>
-    api.post<{ token: string }>(API_ENDPOINTS.AUTH.VERIFY_OTP, payload),
+    publicRequest.post<{ token: string }>(API_ENDPOINTS.AUTH.VERIFY_OTP, payload),
 
   resetPassword: (payload: ResetPasswordPayload) =>
-    api.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, payload),
+    publicRequest.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, payload),
 
-  // ── Local token management ───────────────────────────────────────────────
+  // ── Private endpoints (token required) ───────────────────────────────────
+  logout: () => privateRequest.post(API_ENDPOINTS.AUTH.LOGOUT),
+
+  getMe: () => privateRequest.get<User>(API_ENDPOINTS.AUTH.ME),
+
+  // ── Local token management ────────────────────────────────────────────────
   saveTokens: (tokens: AuthTokens) => {
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
@@ -62,7 +68,5 @@ export const authService = {
     return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   },
 
-  isAuthenticated: (): boolean => {
-    return Boolean(authService.getAccessToken());
-  },
+  isAuthenticated: (): boolean => Boolean(authService.getAccessToken()),
 };

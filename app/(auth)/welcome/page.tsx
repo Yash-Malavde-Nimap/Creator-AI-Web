@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { AiBlob } from '@/components/onboarding/AiBlob';
-import { DarkButton, GradientButton } from '@/components/onboarding/OnboardingButtons';
+import { GetStartedButton } from '@/components/onboarding/GetStartedButton';
+import { DarkButton } from '@/components/onboarding/OnboardingButtons';
 import { SocialBeatLogo } from '@/components/onboarding/SocialBeatLogo';
 import { ROUTES } from '@/constants/routes';
 
@@ -68,9 +68,7 @@ export default function WelcomePage() {
 
         {/* CTA buttons */}
         <div className="mt-8 flex w-full flex-col gap-3">
-          <Link href={ROUTES.REGISTER} className="w-full">
-            <GradientButton>Get started</GradientButton>
-          </Link>
+          <GetStartedButton />
 
           <Link href={ROUTES.LOGIN} className="w-full">
             <DarkButton>Sign in</DarkButton>
