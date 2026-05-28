@@ -1,17 +1,22 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ── Gradient "Get started" style button ─────────────────────────────────── */
 interface GradientButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-export function GradientButton({ loading, className, children, ...props }: GradientButtonProps) {
+export function GradientButton({
+  loading,
+  className,
+  children,
+  ...props
+}: GradientButtonProps) {
   return (
     <button
       className={cn(
-        'sb-btn-gradient flex w-full items-center justify-center rounded-full py-4 text-base font-semibold text-white',
-        'disabled:cursor-not-allowed disabled:opacity-60',
-        className
+        "sb-btn-gradient cursor-pointer flex w-full items-center justify-center rounded-full py-4 text-base font-semibold text-white",
+        "disabled:cursor-not-allowed disabled:opacity-60",
+        className,
       )}
       disabled={loading || props.disabled}
       {...props}
@@ -29,13 +34,18 @@ interface DarkButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   loading?: boolean;
 }
 
-export function DarkButton({ loading, className, children, ...props }: DarkButtonProps) {
+export function DarkButton({
+  loading,
+  className,
+  children,
+  ...props
+}: DarkButtonProps) {
   return (
     <button
       className={cn(
-        'sb-btn-dark flex w-full items-center justify-center rounded-full py-4 text-base font-semibold text-white',
-        'disabled:cursor-not-allowed disabled:opacity-60',
-        className
+        "sb-btn-dark cursor-pointer flex w-full items-center justify-center rounded-full py-4 text-base font-semibold text-white",
+        "disabled:cursor-not-allowed disabled:opacity-60",
+        className,
       )}
       disabled={loading || props.disabled}
       {...props}
@@ -54,7 +64,7 @@ export function BottomNextButton({
   disabled,
   active,
   onClick,
-  children = 'Next',
+  children = "Next",
 }: {
   loading?: boolean;
   disabled?: boolean;

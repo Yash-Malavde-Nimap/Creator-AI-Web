@@ -3,6 +3,7 @@ import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 
 
 import { API_BASE_URL, API_ENDPOINTS, API_TIMEOUT } from '@/constants/api';
 import { STORAGE_KEYS } from '@/constants/config';
+import { authToasts, handleApiError } from '@/lib/toast';
 import type { ApiError, ApiResponse } from '@/types/api.types';
 
 const client = axios.create({
@@ -75,6 +76,7 @@ client.interceptors.response.use(
           [STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.REFRESH_TOKEN, STORAGE_KEYS.USER].forEach((k) =>
             localStorage.removeItem(k)
           );
+          authToasts.sessionExpired();
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);
@@ -83,14 +85,19 @@ client.interceptors.response.use(
       }
     }
 
+    const message =
+      (error.response?.data as Record<string, string>)?.message ??
+      error.message ??
+      'An unexpected error occurred';
+
     const apiError: ApiError = {
-      message:
-        (error.response?.data as Record<string, string>)?.message ??
-        error.message ??
-        'An unexpected error occurred',
+      message,
       status: error.response?.status ?? 500,
       errors: (error.response?.data as Record<string, Record<string, string[]>>)?.errors,
     };
+
+    if (typeof window !== 'undefined') handleApiError(message);
+
     return Promise.reject(apiError);
   }
 );

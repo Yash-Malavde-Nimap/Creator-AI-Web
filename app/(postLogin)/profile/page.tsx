@@ -251,7 +251,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col px-5 pt-12">
+      <div className="flex min-h-screen flex-col px-5 md:px-60 pt-12">
         {/* Title */}
         <h1 className="mb-6 text-xl font-bold text-white">Profile</h1>
 

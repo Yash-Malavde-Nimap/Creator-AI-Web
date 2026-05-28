@@ -1,54 +1,66 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { cn } from '@/lib/utils';
-import InstagramIcon from '@/components/common/svgs/SocialMedia/InstagramIcon';
-import FacebookIcon from '@/components/common/svgs/SocialMedia/FacebookIcon';
-import ThreadsIcon from '@/components/common/svgs/SocialMedia/ThreadsIcon';
-import LinkedInIcon from '@/components/common/svgs/SocialMedia/LinkedInIcon';
-import XIcon from '@/components/common/svgs/SocialMedia/XIcon';
-
-/* ── Toggle switch ──────────────────────────────────────────────────────── */
-
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className="relative inline-flex h-[26px] w-[46px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
-      style={{
-        background: checked
-          ? 'linear-gradient(90deg, #4a9fd5 0%, #3ab5c0 100%)'
-          : 'rgba(255,255,255,0.2)',
-      }}
-    >
-      <span
-        className="inline-block h-[20px] w-[20px] transform rounded-full bg-white shadow transition-transform duration-200"
-        style={{ transform: checked ? 'translateX(22px)' : 'translateX(3px)' }}
-      />
-    </button>
-  );
-}
+import InstagramIcon from "@/components/common/svgs/SocialMedia/InstagramIcon";
+import FacebookIcon from "@/components/common/svgs/SocialMedia/FacebookIcon";
+import ThreadsIcon from "@/components/common/svgs/SocialMedia/ThreadsIcon";
+import LinkedInIcon from "@/components/common/svgs/SocialMedia/LinkedInIcon";
+import XIcon from "@/components/common/svgs/SocialMedia/XIcon";
+import { Toggle } from "@/components/ui/Toggle";
+import { toast } from "@/lib/toast";
+import GreenCheckIcon from "@/components/common/svgs/GreenCheckIcon";
 
 /* ── Platform data ──────────────────────────────────────────────────────── */
 
-type PlatformId = 'instagram' | 'facebook' | 'threads' | 'linkedin' | 'x';
+type PlatformId = "instagram" | "facebook" | "threads" | "linkedin" | "x";
 
 interface Platform {
   id: PlatformId;
   name: string;
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  /** Backend OAuth start path — null means not yet supported */
+  authPath: string | null;
+  /** Backend status check path — null means not yet supported */
+  statusPath: string | null;
 }
 
 const PLATFORMS: Platform[] = [
-  { id: 'instagram', name: 'Instagram', Icon: InstagramIcon },
-  { id: 'facebook', name: 'Facebook', Icon: FacebookIcon },
-  { id: 'threads', name: 'Threads', Icon: ThreadsIcon },
-  { id: 'linkedin', name: 'LinkedIN', Icon: LinkedInIcon },
-  { id: 'x', name: 'X', Icon: XIcon },
+  {
+    id: "instagram",
+    name: "Instagram",
+    Icon: InstagramIcon,
+    authPath: "/api/auth/instagram",
+    statusPath: "/api/social/instagram/status",
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    Icon: FacebookIcon,
+    authPath: "/api/auth/facebook",
+    statusPath: "/api/social/facebook/status",
+  },
+  {
+    id: "threads",
+    name: "Threads",
+    Icon: ThreadsIcon,
+    authPath: "/api/auth/threads",
+    statusPath: "/api/social/threads/status",
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    Icon: LinkedInIcon,
+    authPath: "/api/auth/linkedin",
+    statusPath: "/api/social/linkedin/status",
+  },
+  {
+    id: "x",
+    name: "X",
+    Icon: XIcon,
+    authPath: "/api/auth/x",
+    statusPath: "/api/social/x/status",
+  },
 ];
 
 interface PlatformState {
@@ -56,6 +68,14 @@ interface PlatformState {
   username: string;
   enabled: boolean;
 }
+
+const INITIAL_CONNECTIONS: Record<PlatformId, PlatformState> = {
+  instagram: { connected: false, username: "", enabled: false },
+  facebook: { connected: false, username: "", enabled: false },
+  threads: { connected: false, username: "", enabled: false },
+  linkedin: { connected: false, username: "", enabled: false },
+  x: { connected: false, username: "", enabled: false },
+};
 
 /* ── Platform card ──────────────────────────────────────────────────────── */
 
@@ -79,24 +99,29 @@ function PlatformCard({
     <div
       className="w-full rounded-2xl p-4"
       style={{
-        // background: 'rgba(16, 32, 72, 0.55)',
-        border: '1.5px solid #779CE9',
-        backdropFilter: 'blur(4px)',
+        border: "1.5px solid #779CE9",
+        backdropFilter: "blur(4px)",
       }}
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <span className="text-base font-semibold text-white">{name}</span>
-        {connected && <Toggle checked={enabled} onChange={onToggle} />}
+        <p className="text-base font-semibold text-white flex items-center gap-2">
+          {name}
+          {connected && <GreenCheckIcon />}
+        </p>
+        {/* {connected && <Toggle checked={enabled} onChange={onToggle} />} */}
       </div>
 
       {/* Body row */}
-      <div className="mt-3 flex items-center gap-3 bg-[#0A152F] " style={{
-        border:"1px solid #9ABBFF",
-        padding:"0.5rem 0",
-        paddingRight:"1rem",
-        borderRadius:"50px"
-      }}>
+      <div
+        className="mt-3 flex items-center gap-3 bg-[#0A152F]"
+        style={{
+          border: "1px solid #9ABBFF",
+          padding: "0.5rem 0",
+          paddingRight: "1rem",
+          borderRadius: "50px",
+        }}
+      >
         <Icon height="40" />
         {connected ? (
           <>
@@ -104,9 +129,9 @@ function PlatformCard({
             <button
               type="button"
               onClick={onChange}
-              className="text-sm font-semibold text-[#f5a623] hover:text-[#f7bb52]"
+              className="text-sm cursor-pointer font-semibold text-[#f5a623] hover:text-[#f7bb52]"
             >
-              Change
+              Disconnect
             </button>
           </>
         ) : (
@@ -115,7 +140,7 @@ function PlatformCard({
             <button
               type="button"
               onClick={onConnect}
-              className="text-sm font-semibold text-[#f5a623] hover:text-[#f7bb52]"
+              className="text-sm cursor-pointer font-semibold text-[#f5a623] hover:text-[#f7bb52]"
             >
               Connect
             </button>
@@ -126,124 +151,94 @@ function PlatformCard({
   );
 }
 
-/* ── Connect / Change modal ─────────────────────────────────────────────── */
-
-interface ModalState {
-  platformId: PlatformId;
-  platformName: string;
-  currentUsername: string;
-}
-
-function ConnectModal({
-  modal,
-  onClose,
-  onSubmit,
-}: {
-  modal: ModalState;
-  onClose: () => void;
-  onSubmit: (username: string) => void;
-}) {
-  const [value, setValue] = useState(modal.currentUsername);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = value.replace(/^@/, '').trim();
-    if (trimmed) onSubmit(trimmed);
-  };
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/60"
-        style={{ backdropFilter: 'blur(4px)' }}
-        onClick={onClose}
-      />
-
-      {/* Sheet */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl px-6 pb-10 pt-5"
-        style={{
-          background: 'rgba(8, 18, 45, 0.98)',
-          border: '1.5px solid rgba(100, 150, 220, 0.2)',
-          borderBottom: 'none',
-        }}
-      >
-        {/* Handle */}
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
-
-        <h2 className="mb-5 text-center text-lg font-bold text-white">
-          {modal.currentUsername ? 'Change' : 'Connect'} {modal.platformName}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/50">
-              @
-            </span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Username"
-              className="sb-input w-full rounded-2xl py-3 pl-8 pr-4 text-sm"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={!value.replace(/^@/, '').trim()}
-            className="sb-btn-gradient w-full rounded-2xl py-3 text-sm font-bold text-white disabled:opacity-40"
-          >
-            {modal.currentUsername ? 'Update' : 'Connect'}
-          </button>
-        </form>
-      </div>
-    </>
-  );
-}
-
 /* ── Page ───────────────────────────────────────────────────────────────── */
-
-const INITIAL_CONNECTIONS: Record<PlatformId, PlatformState> = {
-  instagram: { connected: false, username: '', enabled: false },
-  facebook: { connected: false, username: '', enabled: false },
-  threads: { connected: false, username: '', enabled: false },
-  linkedin: { connected: false, username: '', enabled: false },
-  x: { connected: false, username: '', enabled: false },
-};
 
 export default function SocialMediaPage() {
   const [connections, setConnections] =
     useState<Record<PlatformId, PlatformState>>(INITIAL_CONNECTIONS);
-  const [modal, setModal] = useState<ModalState | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showToast = (message: string) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast(message);
-    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  const checkStatus = async () => {
+    for (const p of PLATFORMS) {
+      try {
+        const res = await fetch(p?.statusPath);
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (!data.connected) continue;
+        setConnections((prev) => ({
+          ...prev,
+          [p.id]: {
+            connected: true,
+            username: data.username ?? "",
+            enabled: true,
+          },
+        }));
+      } catch {
+        // status endpoint not reachable — skip silently
+      }
+    }
   };
 
+  /* Check connection status for all platforms on mount */
+  useEffect(() => {
+    checkStatus();
+
+    // Detect OAuth callback — our callback route redirects back with ?connected=true
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("connected") === "true") {
+      const platform = params.get("platform") ?? "";
+      const label =
+        PLATFORMS.find((p) => p.id === platform)?.name ?? "Platform";
+      toast.success(`${label} connected successfully!`);
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("error")) {
+      const platformLabel =
+        PLATFORMS.find((p) => p.id === params.get("platform"))?.name ?? "";
+      const errorMap: Record<string, string> = {
+        not_configured:
+          `${platformLabel} credentials are not set up yet.`.trim(),
+        oauth_denied: "Connection cancelled.",
+        state_mismatch: "Security check failed. Please try again.",
+        token_failed: "Could not retrieve access token. Please try again.",
+        missing_verifier: "PKCE verifier missing. Please try again.",
+        callback_failed: "OAuth callback failed. Please try again.",
+        unknown_platform: "Unknown platform.",
+      };
+      const msg =
+        errorMap[params.get("error")!] ??
+        "Connection failed. Please try again.";
+      toast.error(msg);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    // When window.location.href is used to navigate away, browsers may restore
+    // this page from bfcache on back-navigation. bfcache preserves the DOM but
+    // skips React re-hydration, leaving event handlers unresponsive. Force a
+    // reload so the page is fully re-initialized.
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
+  /* Start OAuth flow — navigates to our Next.js API route which redirects to the provider */
   const handleConnect = (platform: Platform) => {
-    setModal({ platformId: platform.id, platformName: platform.name, currentUsername: '' });
+    toast.loading(`Redirecting to ${platform.name}…`);
+    window.location.href = platform.authPath;
   };
 
-  const handleChange = (platform: Platform) => {
-    setModal({
-      platformId: platform.id,
-      platformName: platform.name,
-      currentUsername: connections[platform.id].username,
-    });
+  /* Revoke current token at the provider, then start a fresh OAuth flow */
+  const handleChange = async (platform: Platform) => {
+    toast.loading(`Disconnecting from ${platform.name}…`);
+    try {
+      await fetch(`/api/auth/${platform.id}/revoke`, { method: 'POST' });
+    } catch {
+      // If revoke request fails, proceed anyway — cookies will be cleared server-side on next connect
+    }
+    window.location.href = `${platform.authPath}?change=true`;
   };
 
+  /* Toggle enabled/disabled locally */
   const handleToggle = (id: PlatformId) => {
     setConnections((prev) => ({
       ...prev,
@@ -251,64 +246,22 @@ export default function SocialMediaPage() {
     }));
   };
 
-  const handleModalSubmit = (username: string) => {
-    if (!modal) return;
-    const { platformId, platformName } = modal;
-    setConnections((prev) => ({
-      ...prev,
-      [platformId]: { connected: true, username, enabled: true },
-    }));
-    showToast(`${platformName} details updated successfully`);
-    setModal(null);
-  };
-
   return (
-    <>
-      <div className="flex min-h-screen flex-col px-5 pt-5">
-        {/* Title */}
-        <h1 className="mb-5 text-xl font-bold text-[#D7E2FF]">
-          # Social Media
-        </h1>
+    <div className="flex min-h-screen flex-col px-5 md:px-60 pt-5">
+      <h1 className="mb-5 text-xl font-bold text-[#D7E2FF]"># Social Media</h1>
 
-        {/* Platform cards */}
-        <div className="flex flex-col gap-4">
-          {PLATFORMS.map((platform) => (
-            <PlatformCard
-              key={platform.id}
-              platform={platform}
-              state={connections[platform.id]}
-              onConnect={() => handleConnect(platform)}
-              onToggle={() => handleToggle(platform.id)}
-              onChange={() => handleChange(platform)}
-            />
-          ))}
-        </div>
+      <div className="flex flex-col gap-4">
+        {PLATFORMS.map((platform) => (
+          <PlatformCard
+            key={platform.id}
+            platform={platform}
+            state={connections[platform.id]}
+            onConnect={() => handleConnect(platform)}
+            onToggle={() => handleToggle(platform.id)}
+            onChange={() => handleChange(platform)}
+          />
+        ))}
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div
-          className={cn(
-            'pointer-events-none fixed left-1/2 top-6 z-50 -translate-x-1/2 whitespace-nowrap rounded-2xl px-5 py-2.5 text-sm font-medium text-white shadow-lg',
-            'transition-all duration-300'
-          )}
-          style={{
-            background: 'linear-gradient(90deg, #3a7fc1 0%, #4a9fd5 100%)',
-            boxShadow: '0 4px 24px rgba(74,159,213,0.35)',
-          }}
-        >
-          {toast}
-        </div>
-      )}
-
-      {/* Connect / Change modal */}
-      {modal && (
-        <ConnectModal
-          modal={modal}
-          onClose={() => setModal(null)}
-          onSubmit={handleModalSubmit}
-        />
-      )}
-    </>
+    </div>
   );
 }

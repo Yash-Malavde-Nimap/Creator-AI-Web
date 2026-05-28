@@ -8,11 +8,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.cloudinary.com' },
     ],
   },
-  experimental: {
-    // Enable when server-side logging is needed
-    // serverActions: { bodySizeLimit: '2mb' },
-  },
-  // Strip unused Tailwind CSS in production
+  experimental: {},
   output: undefined,
 };
 

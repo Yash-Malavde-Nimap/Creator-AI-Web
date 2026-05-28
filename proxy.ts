@@ -6,6 +6,13 @@ import { STORAGE_KEYS } from '@/constants/config';
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Let all OAuth API routes pass through unconditionally.
+  // /api/auth/[platform]         — initiates the OAuth redirect to the provider
+  // /api/auth/[platform]/callback — receives the provider redirect; no session yet
+  if (pathname.startsWith('/api/auth/')) {
+    return NextResponse.next();
+  }
+
   // Read access token from cookies (set by the auth flow for SSR support)
   const token = request.cookies.get(STORAGE_KEYS.ACCESS_TOKEN)?.value;
   const isAuthenticated = Boolean(token);

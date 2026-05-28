@@ -41,6 +41,8 @@ export const authService = {
   saveTokens: (tokens: AuthTokens) => {
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    // Mirror access token to a cookie so the server-side middleware can read it.
+    document.cookie = `${STORAGE_KEYS.ACCESS_TOKEN}=${tokens.accessToken}; path=/; SameSite=Lax`;
   },
 
   saveUser: (user: User) => {
@@ -51,6 +53,7 @@ export const authService = {
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
+    document.cookie = `${STORAGE_KEYS.ACCESS_TOKEN}=; path=/; max-age=0`;
   },
 
   getStoredUser: (): User | null => {
@@ -65,7 +68,15 @@ export const authService = {
 
   getAccessToken: (): string | null => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    // Prefer localStorage; fall back to cookie for cases where localStorage
+    // was cleared but the cookie is still present (e.g. a new tab).
+    return (
+      localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) ??
+      (document.cookie
+        .split('; ')
+        .find((c) => c.startsWith(`${STORAGE_KEYS.ACCESS_TOKEN}=`))
+        ?.split('=')[1] ?? null)
+    );
   },
 
   isAuthenticated: (): boolean => Boolean(authService.getAccessToken()),

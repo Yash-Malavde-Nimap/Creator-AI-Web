@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
 import { API_BASE_URL, API_TIMEOUT } from '@/constants/api';
+import { handleApiError } from '@/lib/toast';
 import type { ApiError, ApiResponse } from '@/types/api.types';
 
 const client = axios.create({
@@ -13,14 +14,19 @@ const client = axios.create({
 client.interceptors.response.use(
   (response) => response,
   (error) => {
+    const message =
+      (error.response?.data as Record<string, string>)?.message ??
+      error.message ??
+      'An unexpected error occurred';
+
     const apiError: ApiError = {
-      message:
-        (error.response?.data as Record<string, string>)?.message ??
-        error.message ??
-        'An unexpected error occurred',
+      message,
       status: error.response?.status ?? 500,
       errors: (error.response?.data as Record<string, Record<string, string[]>>)?.errors,
     };
+
+    if (typeof window !== 'undefined') handleApiError(message);
+
     return Promise.reject(apiError);
   }
 );

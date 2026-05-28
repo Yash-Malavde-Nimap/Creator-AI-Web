@@ -12,6 +12,7 @@ import { registerFormConfig } from "@/config/forms.config";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useRegistrationStore } from "@/store/registration.store";
+import { authService } from "@/services/auth.service";
 import type { RegisterFormValues } from "@/types/forms.types";
 
 const COUNTRY_CODES = [
@@ -75,7 +76,20 @@ function RegisterContent() {
         email: values.email,
         password: values.password,
       });
-      router.push(ROUTES.PLANS);
+      authService.saveTokens({
+        accessToken: "dummy_access_token",
+        refreshToken: "dummy_refresh_token",
+        expiresIn: 3600,
+      });
+      authService.saveUser({
+        id: "dummy_user_id",
+        name: values.name,
+        email: values.email,
+        role: "viewer",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      router.push(ROUTES.HOME);
     }
   };
 

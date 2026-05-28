@@ -5,7 +5,11 @@
       "Bash(npx husky *)",
       "Bash(npx tsc *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\HP\\\\Desktop\\\\Nimap\\\\Creator AI Admin\\\\creator-ai-web\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(mkdir -p \"c:/Users/HP/Desktop/Nimap/Creator AI Admin/creator-ai-web/app/api/auth/[platform]/revoke\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\HP\\Desktop\\Nimap\\Creator AI Admin\\creator-ai-web\\app\\api\\auth\\[platform]"
     ]
   }
 }
