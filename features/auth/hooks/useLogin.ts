@@ -23,7 +23,7 @@ export function useLogin() {
       router.push(ROUTES.HOME);
     },
     onError: (error) => {
-      console.log("LOGINNN error", error);
+      console.log("LOGIN error", error);
     },
   });
 }

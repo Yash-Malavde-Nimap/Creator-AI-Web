@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 
-import { STORAGE_KEYS } from '@/constants/config';
-import { AuthTokens, User } from '@/types/auth.types';
+import { STORAGE_KEYS } from "@/constants/config";
+import { AuthTokens, User } from "@/types/auth.types";
 
 interface AuthStore {
   user: User | null;
@@ -57,8 +57,8 @@ export const useAuthStore = create<AuthStore>()(
       {
         name: STORAGE_KEYS.USER,
         partialize: (state) => ({ user: state.user, tokens: state.tokens }),
-      }
+      },
     ),
-    { name: 'AuthStore' }
-  )
+    { name: "AuthStore" },
+  ),
 );

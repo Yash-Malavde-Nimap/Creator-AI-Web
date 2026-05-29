@@ -110,7 +110,7 @@ export function SocialBeatLoginForm() {
       </form>
 
       <p className="mt-6 text-center text-sm text-white/45">
-        Don&apos;t have an account?{" "}
+        Don't have an account?{" "}
         <Link
           href={ROUTES.REGISTER}
           className="font-medium text-[#f5a623] hover:text-[#f7bb52]"

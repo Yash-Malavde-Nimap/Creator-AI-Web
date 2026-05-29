@@ -82,18 +82,16 @@ const INITIAL_CONNECTIONS: Record<PlatformId, PlatformState> = {
 function PlatformCard({
   platform,
   state,
-  onConnect,
   onToggle,
   onChange,
 }: {
   platform: Platform;
   state: PlatformState;
-  onConnect: () => void;
   onToggle: () => void;
   onChange: () => void;
 }) {
   const { Icon, name } = platform;
-  const { connected, username, enabled } = state;
+  const { connected, username } = state;
 
   return (
     <div
@@ -109,7 +107,6 @@ function PlatformCard({
           {name}
           {connected && <GreenCheckIcon />}
         </p>
-        {/* {connected && <Toggle checked={enabled} onChange={onToggle} />} */}
       </div>
 
       {/* Body row */}
@@ -137,13 +134,13 @@ function PlatformCard({
         ) : (
           <>
             <div className="flex-1" />
-            <button
-              type="button"
-              onClick={onConnect}
-              className="text-sm cursor-pointer font-semibold text-[#f5a623] hover:text-[#f7bb52]"
+            {/* Native anchor so the browser handles the navigation — avoids bfcache / JS-nav issues */}
+            <a
+              href={platform.authPath ?? "#"}
+              className="text-sm font-semibold text-[#f5a623] hover:text-[#f7bb52]"
             >
               Connect
-            </button>
+            </a>
           </>
         )}
       </div>
@@ -180,6 +177,9 @@ export default function SocialMediaPage() {
 
   /* Check connection status for all platforms on mount */
   useEffect(() => {
+    // Reset pointer-events in case a previous bfcache restore set it to none
+    document.body.style.pointerEvents = "";
+    toast.dismiss();
     checkStatus();
 
     // Detect OAuth callback — our callback route redirects back with ?connected=true
@@ -210,25 +210,27 @@ export default function SocialMediaPage() {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    // When window.location.href is used to navigate away, browsers may restore
-    // this page from bfcache on back-navigation. bfcache preserves the DOM but
-    // skips React re-hydration, leaving event handlers unresponsive. Force a
-    // reload so the page is fully re-initialized.
+    // Opt this page out of bfcache. OAuth navigates away via window.location.href;
+    // bfcache would restore a frozen React tree where event handlers don't fire.
+    const noop = () => {};
+    window.addEventListener("unload", noop);
+
     const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) window.location.reload();
+      if (e.persisted) {
+        toast.dismiss();
+        window.location.reload();
+      }
     };
     window.addEventListener("pageshow", handlePageShow);
-    return () => window.removeEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("unload", noop);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
   }, []);
-
-  /* Start OAuth flow — navigates to our Next.js API route which redirects to the provider */
-  const handleConnect = (platform: Platform) => {
-    toast.loading(`Redirecting to ${platform.name}…`);
-    window.location.href = platform.authPath;
-  };
 
   /* Revoke current token at the provider, then start a fresh OAuth flow */
   const handleChange = async (platform: Platform) => {
+    toast.dismiss();
     toast.loading(`Disconnecting from ${platform.name}…`);
     try {
       await fetch(`/api/auth/${platform.id}/revoke`, { method: 'POST' });
@@ -256,7 +258,6 @@ export default function SocialMediaPage() {
             key={platform.id}
             platform={platform}
             state={connections[platform.id]}
-            onConnect={() => handleConnect(platform)}
             onToggle={() => handleToggle(platform.id)}
             onChange={() => handleChange(platform)}
           />

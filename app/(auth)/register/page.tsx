@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useRegistrationStore } from "@/store/registration.store";
 import { authService } from "@/services/auth.service";
+import { toast } from "@/lib/toast";
 import type { RegisterFormValues } from "@/types/forms.types";
 
 const COUNTRY_CODES = [
@@ -42,6 +43,7 @@ function RegisterContent() {
 
   const { setRegistrationData } = useRegistrationStore();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedCode, setSelectedCode] = useState(
     registerFormConfig.defaultValues.countryCode,
@@ -76,20 +78,24 @@ function RegisterContent() {
         email: values.email,
         password: values.password,
       });
-      authService.saveTokens({
-        accessToken: "dummy_access_token",
-        refreshToken: "dummy_refresh_token",
-        expiresIn: 3600,
-      });
-      authService.saveUser({
-        id: "dummy_user_id",
-        name: values.name,
-        email: values.email,
-        role: "viewer",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-      router.push(ROUTES.HOME);
+      setIsSubmitting(true);
+      try {
+        const res = await authService.register({
+          name: values.name,
+          number: `${values.countryCode}${values.phone}`,
+          email: values.email,
+          password: values.password,
+        });
+        authService.saveTokens(res.data.tokens);
+        authService.saveUser(res.data.user);
+        router.push(ROUTES.HOME);
+      } catch (err: unknown) {
+        const msg =
+          (err as { message?: string })?.message ?? "Registration failed. Please try again.";
+        toast.error(msg);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -272,7 +278,7 @@ function RegisterContent() {
         </div>
       </div>
 
-      <BottomNextButton active={isStepValid} onClick={handleNext}>
+      <BottomNextButton active={isStepValid && !isSubmitting} onClick={handleNext} loading={isSubmitting}>
         {step === 4 ? "Create account" : "Next"}
       </BottomNextButton>
     </>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
-import { useRegistrationStore } from '@/store/registration.store';
+import { authService } from '@/services/auth.service';
 import InstagramIcon from '@/components/common/svgs/SocialMedia/InstagramIcon';
 import FacebookIcon from '@/components/common/svgs/SocialMedia/FacebookIcon';
 import ThreadsIcon from '@/components/common/svgs/SocialMedia/ThreadsIcon';
@@ -190,7 +190,7 @@ const MOCK_POSTS = [
   {
     id: '1',
     text: "🚀 AI is no longer the future — it's the biggest competitive advantage today. The companies adopting AI now.\n#AI #Innovation #FutureOfWork #Tech",
-    image: 1 as const,
+    image: "1" as const,
     timestamp: 'Mon, 25 Jan 2026 : 03.25 PM',
   },
   {
@@ -210,8 +210,8 @@ const MOCK_POSTS = [
 /* ── Page ───────────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
-  const { name } = useRegistrationStore();
-  const displayName = name ? name.split(' ')[0] : 'User';
+  const storedUser = authService.getStoredUser();
+  const displayName = storedUser?.name ? storedUser.name.split(' ')[0] : 'User';
 
   const [scrolled, setScrolled] = useState(false);
   const [activePlatform, setActivePlatform] = useState<PlatformTabId>('instagram');
