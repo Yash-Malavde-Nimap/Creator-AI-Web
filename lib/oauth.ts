@@ -136,7 +136,7 @@ export function getPlatformConfig(platform: string): PlatformConfig | null {
       },
       pkce:                true,
       useBasicAuthForToken: true,
-      reAuthParams:        { force_login: 'true' },
+      // X doesn't reliably support prompt=login in OAuth 2.0 — revocation handles disconnect instead
     },
   };
 

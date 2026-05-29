@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import { GradientButton } from "@/components/onboarding/OnboardingButtons";
 import { OnboardingInput } from "@/components/onboarding/OnboardingInput";
 import { SocialBeatLogo } from "@/components/onboarding/SocialBeatLogo";
 import { loginFormConfig } from "@/config/forms.config";
 import { ROUTES } from "@/constants/routes";
-import { useLogin } from "@/features/auth/hooks/useLogin";
+import { authService } from "@/services/auth.service";
 import type { LoginFormValues } from "@/types/forms.types";
 import { EyeIcon } from "@/components/common/svgs/EyeIcon";
 
 export function SocialBeatLoginForm() {
   const [showPw, setShowPw] = useState(false);
-  const { mutate: login, isPending, error } = useLogin();
+  const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -26,10 +28,20 @@ export function SocialBeatLoginForm() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    // console.log("data", data);
-    login(data);
+    setIsPending(true);
+    authService.saveTokens({
+      accessToken: "dummy_access_token",
+      refreshToken: "dummy_refresh_token",
+      expiresIn: 3600,
+    });
+    authService.saveUser({
+      id: "dummy_user_id",
+      name: data.email.split("@")[0],
+      email: data.email,
+      role: "viewer",
+    });
+    router.push(ROUTES.HOME);
   };
-  const apiError = error as { message?: string } | null;
 
   return (
     <div className="flex w-full max-w-sm flex-col items-center">
@@ -43,18 +55,6 @@ export function SocialBeatLoginForm() {
         <br />
         social growth with AI
       </p>
-
-      {apiError?.message && (
-        <div
-          className="mt-6 w-full rounded-2xl px-4 py-3 text-sm text-red-300"
-          style={{
-            background: "rgba(200,50,50,0.15)",
-            border: "1px solid rgba(200,50,50,0.3)",
-          }}
-        >
-          {apiError.message}
-        </div>
-      )}
 
       <form
         id="login-form"
