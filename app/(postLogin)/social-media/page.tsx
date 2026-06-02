@@ -7,23 +7,16 @@ import FacebookIcon from "@/components/common/svgs/SocialMedia/FacebookIcon";
 import ThreadsIcon from "@/components/common/svgs/SocialMedia/ThreadsIcon";
 import LinkedInIcon from "@/components/common/svgs/SocialMedia/LinkedInIcon";
 import XIcon from "@/components/common/svgs/SocialMedia/XIcon";
-import { Toggle } from "@/components/ui/Toggle";
 import { toast } from "@/lib/toast";
-import GreenCheckIcon from "@/components/common/svgs/GreenCheckIcon";
+import {
+  PlatformCard,
+  type Platform,
+  type PlatformState,
+} from "@/components/social-media/PlatformCard";
 
 /* ── Platform data ──────────────────────────────────────────────────────── */
 
 type PlatformId = "instagram" | "facebook" | "threads" | "linkedin" | "x";
-
-interface Platform {
-  id: PlatformId;
-  name: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  /** Backend OAuth start path — null means not yet supported */
-  authPath: string | null;
-  /** Backend status check path — null means not yet supported */
-  statusPath: string | null;
-}
 
 const PLATFORMS: Platform[] = [
   {
@@ -63,12 +56,6 @@ const PLATFORMS: Platform[] = [
   },
 ];
 
-interface PlatformState {
-  connected: boolean;
-  username: string;
-  enabled: boolean;
-}
-
 const INITIAL_CONNECTIONS: Record<PlatformId, PlatformState> = {
   instagram: { connected: false, username: "", enabled: false },
   facebook: { connected: false, username: "", enabled: false },
@@ -76,77 +63,6 @@ const INITIAL_CONNECTIONS: Record<PlatformId, PlatformState> = {
   linkedin: { connected: false, username: "", enabled: false },
   x: { connected: false, username: "", enabled: false },
 };
-
-/* ── Platform card ──────────────────────────────────────────────────────── */
-
-function PlatformCard({
-  platform,
-  state,
-  onToggle,
-  onChange,
-}: {
-  platform: Platform;
-  state: PlatformState;
-  onToggle: () => void;
-  onChange: () => void;
-}) {
-  const { Icon, name } = platform;
-  const { connected, username } = state;
-
-  return (
-    <div
-      className="w-full rounded-2xl p-4"
-      style={{
-        border: "1.5px solid #779CE9",
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <p className="text-base font-semibold text-white flex items-center gap-2">
-          {name}
-          {connected && <GreenCheckIcon />}
-        </p>
-      </div>
-
-      {/* Body row */}
-      <div
-        className="mt-3 flex items-center gap-3 bg-[#0A152F]"
-        style={{
-          border: "1px solid #9ABBFF",
-          padding: "0.5rem 0",
-          paddingRight: "1rem",
-          borderRadius: "50px",
-        }}
-      >
-        <Icon height="40" />
-        {connected ? (
-          <>
-            <span className="flex-1 text-sm text-white/70">@{username}</span>
-            <button
-              type="button"
-              onClick={onChange}
-              className="text-sm cursor-pointer font-semibold text-[#f5a623] hover:text-[#f7bb52]"
-            >
-              Disconnect
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="flex-1" />
-            {/* Native anchor so the browser handles the navigation — avoids bfcache / JS-nav issues */}
-            <a
-              href={platform.authPath ?? "#"}
-              className="text-sm font-semibold text-[#f5a623] hover:text-[#f7bb52]"
-            >
-              Connect
-            </a>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* ── Page ───────────────────────────────────────────────────────────────── */
 
@@ -157,13 +73,13 @@ export default function SocialMediaPage() {
   const checkStatus = async () => {
     for (const p of PLATFORMS) {
       try {
-        const res = await fetch(p?.statusPath);
+        const res = await fetch(p.statusPath!);
         if (!res.ok) continue;
         const data = await res.json();
         if (!data.connected) continue;
         setConnections((prev) => ({
           ...prev,
-          [p.id]: {
+          [p.id as PlatformId]: {
             connected: true,
             username: data.username ?? "",
             enabled: true,
@@ -175,14 +91,11 @@ export default function SocialMediaPage() {
     }
   };
 
-  /* Check connection status for all platforms on mount */
   useEffect(() => {
-    // Reset pointer-events in case a previous bfcache restore set it to none
     document.body.style.pointerEvents = "";
     toast.dismiss();
     checkStatus();
 
-    // Detect OAuth callback — our callback route redirects back with ?connected=true
     const params = new URLSearchParams(window.location.search);
     if (params.get("connected") === "true") {
       const platform = params.get("platform") ?? "";
@@ -203,15 +116,13 @@ export default function SocialMediaPage() {
         callback_failed: "OAuth callback failed. Please try again.",
         unknown_platform: "Unknown platform.",
       };
-      const msg =
+      toast.error(
         errorMap[params.get("error")!] ??
-        "Connection failed. Please try again.";
-      toast.error(msg);
+          "Connection failed. Please try again.",
+      );
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    // Opt this page out of bfcache. OAuth navigates away via window.location.href;
-    // bfcache would restore a frozen React tree where event handlers don't fire.
     const noop = () => {};
     window.addEventListener("unload", noop);
 
@@ -228,19 +139,17 @@ export default function SocialMediaPage() {
     };
   }, []);
 
-  /* Revoke current token at the provider, then start a fresh OAuth flow */
   const handleChange = async (platform: Platform) => {
     toast.dismiss();
     toast.loading(`Disconnecting from ${platform.name}…`);
     try {
-      await fetch(`/api/auth/${platform.id}/revoke`, { method: 'POST' });
+      await fetch(`/api/auth/${platform.id}/revoke`, { method: "POST" });
     } catch {
-      // If revoke request fails, proceed anyway — cookies will be cleared server-side on next connect
+      // revoke failed — proceed anyway
     }
     window.location.href = `${platform.authPath}?change=true`;
   };
 
-  /* Toggle enabled/disabled locally */
   const handleToggle = (id: PlatformId) => {
     setConnections((prev) => ({
       ...prev,
@@ -249,16 +158,16 @@ export default function SocialMediaPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col px-5 md:px-60 pt-5">
+    <div className="flex min-h-screen flex-col px-5 md:px-96 pt-5 ">
       <h1 className="mb-5 text-xl font-bold text-[#D7E2FF]"># Social Media</h1>
 
       <div className="flex flex-col gap-4">
         {PLATFORMS.map((platform) => (
           <PlatformCard
-            key={platform.id}
+            key={platform?.id}
             platform={platform}
-            state={connections[platform.id]}
-            onToggle={() => handleToggle(platform.id)}
+            state={connections[platform?.id as PlatformId]}
+            onToggle={() => handleToggle(platform?.id)}
             onChange={() => handleChange(platform)}
           />
         ))}
