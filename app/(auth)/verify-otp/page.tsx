@@ -14,7 +14,7 @@ export default function VerifyOtpPage() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') ?? '';
 
-  const { mutate: verify, isPending, error } = useVerifyOtp();
+  const { mutate: verify, isPending } = useVerifyOtp();
 
   const {
     register,
@@ -23,7 +23,6 @@ export default function VerifyOtpPage() {
   } = useForm<OtpFormValues>({ defaultValues: otpConfig.defaultValues });
 
   const onSubmit = (data: OtpFormValues) => verify({ email, code: data.code });
-  const apiError = error as { message?: string } | null;
 
   return (
     <>
@@ -39,15 +38,6 @@ export default function VerifyOtpPage() {
             <br />
             code to your email.
           </p>
-
-          {apiError?.message && (
-            <div
-              className="mt-6 w-full rounded-2xl px-4 py-3 text-sm text-red-300"
-              style={{ background: 'rgba(200,50,50,0.15)', border: '1px solid rgba(200,50,50,0.3)' }}
-            >
-              {apiError.message}
-            </div>
-          )}
 
           <form
             id="otp-form"

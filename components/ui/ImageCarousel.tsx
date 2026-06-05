@@ -15,6 +15,7 @@ export function ImageCarousel({ urls, aspectRatio = "16/9" }: ImageCarouselProps
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, dragFree: false });
   const [current, setCurrent] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [hovered, setHovered] = useState(false);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -27,37 +28,82 @@ export function ImageCarousel({ urls, aspectRatio = "16/9" }: ImageCarouselProps
     return () => { emblaApi.off("select", onSelect); };
   }, [emblaApi, onSelect]);
 
-  const scrollTo = useCallback(
-    (index: number) => emblaApi?.scrollTo(index),
-    [emblaApi]
-  );
+  const scrollTo   = useCallback((index: number) => emblaApi?.scrollTo(index),   [emblaApi]);
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
   return (
     <>
       <div className="mt-3 w-full overflow-hidden">
-        {/* Slide track */}
-        <div ref={emblaRef} className="overflow-hidden rounded-xl">
-          <div className="flex h-[22.5vh] md:h-[50vh]">
-            {urls.map((url, i) => (
-              <div key={url} className="relative min-w-0 flex-[0_0_100%]">
-                <button
-                  type="button"
-                  className="w-full"
-                  onClick={() => setLightboxIndex(i)}
-                  aria-label={`Open image ${i + 1}`}
-                >
-                  <Image
-                    src={url}
-                    alt=""
-                    width={1920}
-                    height={1080}
-                    className="w-full object-cover cursor-pointer"
-                    style={{ aspectRatio }}
-                  />
-                </button>
-              </div>
-            ))}
+        {/* Slide track with hover-revealed arrows */}
+        <div
+          className="relative overflow-hidden rounded-xl"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <div ref={emblaRef} className="overflow-hidden">
+            <div className="flex h-[22.5vh] md:h-[50vh]">
+              {urls.map((url, i) => (
+                <div key={url} className="relative min-w-0 flex-[0_0_100%]">
+                  <button
+                    type="button"
+                    className="w-full h-full"
+                    onClick={() => setLightboxIndex(i)}
+                    aria-label={`Open image ${i + 1}`}
+                  >
+                    <Image
+                      src={url}
+                      alt=""
+                      width={1920}
+                      height={1080}
+                      className="w-full h-full object-cover cursor-pointer"
+                      style={{ aspectRatio }}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Prev arrow */}
+          {urls.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); scrollPrev(); }}
+              disabled={current === 0}
+              aria-label="Previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-200 disabled:opacity-20"
+              style={{
+                background: "rgba(0,0,0,0.45)",
+                opacity: hovered && current !== 0 ? 1 : 0,
+                pointerEvents: hovered ? "auto" : "none",
+              }}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Next arrow */}
+          {urls.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); scrollNext(); }}
+              disabled={current === urls.length - 1}
+              aria-label="Next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-200 disabled:opacity-20"
+              style={{
+                background: "rgba(0,0,0,0.45)",
+                opacity: hovered && current !== urls.length - 1 ? 1 : 0,
+                pointerEvents: hovered ? "auto" : "none",
+              }}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Dot indicators */}

@@ -1,7 +1,7 @@
-import { API_ENDPOINTS } from '@/constants/api';
-import { STORAGE_KEYS } from '@/constants/config';
-import { privateRequest } from '@/services/privateRequest';
-import { publicRequest } from '@/services/publicRequest';
+import { API_ENDPOINTS } from "@/constants/api";
+import { STORAGE_KEYS } from "@/constants/config";
+import { privateRequest } from "@/services/privateRequest";
+import { publicRequest } from "@/services/publicRequest";
 import type {
   AuthTokens,
   ForgotPasswordPayload,
@@ -10,30 +10,33 @@ import type {
   ResetPasswordPayload,
   VerifyOtpPayload,
   User,
-} from '@/types/auth.types';
+} from "@/types/auth.types";
 
 // ── Public endpoints (no token required) ─────────────────────────────────────
 
 function login(credentials: LoginCredentials) {
   return publicRequest.post<{ user: User; tokens: AuthTokens }>(
     API_ENDPOINTS.AUTH.LOGIN,
-    credentials
+    credentials,
   );
 }
 
 function register(credentials: RegisterCredentials) {
   return publicRequest.post<{ user: User; tokens: AuthTokens }>(
     API_ENDPOINTS.AUTH.REGISTER,
-    credentials
+    credentials,
   );
 }
 
 function forgotPassword(payload: ForgotPasswordPayload) {
-  return publicRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, payload);
+  return publicRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD_REQUEST_OTP, payload);
 }
 
 function verifyOtp(payload: VerifyOtpPayload) {
-  return publicRequest.post<{ token: string }>(API_ENDPOINTS.AUTH.VERIFY_OTP, payload);
+  return publicRequest.post<{ token: string }>(
+    API_ENDPOINTS.AUTH.FORGOT_PASSWORD_VERIFY_OTP,
+    payload,
+  );
 }
 
 function resetPassword(payload: ResetPasswordPayload) {
@@ -71,7 +74,7 @@ function clearSession() {
 }
 
 function getStoredUser(): User | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.USER);
     return raw ? (JSON.parse(raw) as User) : null;
@@ -81,15 +84,16 @@ function getStoredUser(): User | null {
 }
 
 function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   // Prefer localStorage; fall back to cookie for cases where localStorage
   // was cleared but the cookie is still present (e.g. a new tab).
   return (
     localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) ??
-    (document.cookie
-      .split('; ')
+    document.cookie
+      .split("; ")
       .find((c) => c.startsWith(`${STORAGE_KEYS.ACCESS_TOKEN}=`))
-      ?.split('=')[1] ?? null)
+      ?.split("=")[1] ??
+    null
   );
 }
 

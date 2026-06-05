@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { ROUTES } from '@/constants/routes';
 import { authService } from '@/services/auth.service';
+import { toast } from '@/lib/toast';
 import type { VerifyOtpPayload } from '@/types/auth.types';
 
 export function useVerifyOtp() {
@@ -15,6 +16,9 @@ export function useVerifyOtp() {
     onSuccess: (response) => {
       const token = response.data.token;
       router.push(`${ROUTES.RESET_PASSWORD}?token=${encodeURIComponent(token)}`);
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err?.message ?? 'Invalid or expired OTP. Please try again.');
     },
   });
 }

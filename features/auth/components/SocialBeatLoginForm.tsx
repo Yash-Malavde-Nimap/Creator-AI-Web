@@ -11,6 +11,7 @@ import { SocialBeatLogo } from "@/components/onboarding/SocialBeatLogo";
 import { loginFormConfig } from "@/config/forms.config";
 import { ROUTES } from "@/constants/routes";
 import { authService } from "@/services/auth.service";
+import { toast } from "@/lib/toast";
 import type { LoginFormValues } from "@/types/forms.types";
 import { EyeIcon } from "@/components/common/svgs/EyeIcon";
 
@@ -27,20 +28,20 @@ export function SocialBeatLoginForm() {
     defaultValues: loginFormConfig.defaultValues,
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsPending(true);
-    authService.saveTokens({
-      accessToken: "dummy_access_token",
-      refreshToken: "dummy_refresh_token",
-      expiresIn: 3600,
-    });
-    authService.saveUser({
-      id: "dummy_user_id",
-      name: data.email.split("@")[0],
-      email: data.email,
-      role: "viewer",
-    });
-    router.push(ROUTES.HOME);
+    try {
+      const res = await authService.login(data);
+      authService.saveTokens(res.data.tokens);
+      authService.saveUser(res.data.user);
+      router.push(ROUTES.HOME);
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ?? "Invalid email or password.";
+      toast.error(msg);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

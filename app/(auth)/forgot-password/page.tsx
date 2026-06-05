@@ -10,7 +10,7 @@ import { useForgotPassword } from '@/features/auth/hooks/useForgotPassword';
 import type { ForgotPasswordFormValues } from '@/types/forms.types';
 
 export default function ForgotPasswordPage() {
-  const { mutate: sendReset, isPending, error } = useForgotPassword();
+  const { mutate: sendReset, isPending } = useForgotPassword();
 
   const {
     register,
@@ -19,7 +19,6 @@ export default function ForgotPasswordPage() {
   } = useForm<ForgotPasswordFormValues>({ defaultValues: forgotPasswordConfig.defaultValues, mode: 'onChange' });
 
   const onSubmit = (data: ForgotPasswordFormValues) => sendReset(data);
-  const apiError = error as { message?: string } | null;
 
   return (
     <>
@@ -35,15 +34,6 @@ export default function ForgotPasswordPage() {
             <br />
             to reset your password.
           </p>
-
-          {apiError?.message && (
-            <div
-              className="mt-6 w-full rounded-2xl px-4 py-3 text-sm text-red-300"
-              style={{ background: 'rgba(200,50,50,0.15)', border: '1px solid rgba(200,50,50,0.3)' }}
-            >
-              {apiError.message}
-            </div>
-          )}
 
           <form
             id="forgot-form"

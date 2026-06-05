@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const { mutate: reset, isPending, error } = useResetPassword();
+  const { mutate: reset, isPending } = useResetPassword();
 
   const {
     register,
@@ -40,7 +40,6 @@ export default function ResetPasswordPage() {
   } = useForm<ResetPasswordFormValues>({ defaultValues: resetPasswordConfig.defaultValues, mode: 'onChange' });
 
   const onSubmit = (data: ResetPasswordFormValues) => reset({ token, ...data });
-  const apiError = error as { message?: string } | null;
 
   return (
     <>
@@ -56,15 +55,6 @@ export default function ResetPasswordPage() {
             <br />
             you can set your new password.
           </p>
-
-          {apiError?.message && (
-            <div
-              className="mt-6 w-full rounded-2xl px-4 py-3 text-sm text-red-300"
-              style={{ background: 'rgba(200,50,50,0.15)', border: '1px solid rgba(200,50,50,0.3)' }}
-            >
-              {apiError.message}
-            </div>
-          )}
 
           <form
             id="reset-form"

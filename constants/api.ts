@@ -3,14 +3,15 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    LOGOUT: '/auth/logout',
-    REFRESH: '/auth/refresh',
-    ME: '/auth/me',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    VERIFY_OTP: '/auth/verify-otp',
-    RESET_PASSWORD: '/auth/reset-password',
+    LOGIN:                       '/auth/login',
+    REGISTER:                    '/auth/registration',
+    LOGOUT:                      '/auth/logout',
+    ME:                          '/auth/test',
+    REGISTER_REQUEST_OTP:        '/auth/register/request-otp',
+    REGISTER_VERIFY_OTP:         '/auth/register/verify-otp',
+    FORGOT_PASSWORD_REQUEST_OTP: '/auth/forgot-password/request-otp',
+    FORGOT_PASSWORD_VERIFY_OTP:  '/auth/forgot-password/verify-otp',
+    RESET_PASSWORD:              '/auth/reset-password',
   },
 
   // Users
