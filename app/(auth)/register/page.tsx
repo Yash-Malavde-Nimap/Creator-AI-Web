@@ -11,21 +11,12 @@ import { EyeIcon } from "@/components/common/svgs/EyeIcon";
 import { registerFormConfig } from "@/config/forms.config";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
+import { COUNTRY_CODES } from "@/constants/countryCodes";
 import { useRegistrationStore } from "@/store/registration.store";
 import { authService } from "@/services/auth.service";
 import { toast } from "@/lib/toast";
 import type { RegisterFormValues } from "@/types/forms.types";
 
-const COUNTRY_CODES = [
-  { code: "+1", flag: "🇺🇸", name: "US" },
-  { code: "+44", flag: "🇬🇧", name: "UK" },
-  { code: "+91", flag: "🇮🇳", name: "IN" },
-  { code: "+61", flag: "🇦🇺", name: "AU" },
-  { code: "+49", flag: "🇩🇪", name: "DE" },
-  { code: "+33", flag: "🇫🇷", name: "FR" },
-  { code: "+971", flag: "🇦🇪", name: "AE" },
-  { code: "+65", flag: "🇸🇬", name: "SG" },
-];
 
 const STEP_FIELDS: Record<1 | 2 | 3 | 4, (keyof RegisterFormValues)[]> = {
   1: ["name"],
@@ -38,18 +29,22 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const raw = Number(searchParams.get("step"));
+  const raw  = Number(searchParams.get("step"));
   const step = raw >= 1 && raw <= 4 ? (raw as 1 | 2 | 3 | 4) : 1;
 
   const { setRegistrationData } = useRegistrationStore();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedCode, setSelectedCode] = useState(
-    registerFormConfig.defaultValues.countryCode,
-  );
-  const [showPw, setShowPw] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  // OTP sub-step state (lives between step 2 and step 3)
+  const [otpSent,        setOtpSent]        = useState(false);
+  const [otpCode,        setOtpCode]        = useState("");
+  const [isSendingOtp,   setIsSendingOtp]   = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  const [isSubmitting,  setIsSubmitting]  = useState(false);
+  const [dropdownOpen,  setDropdownOpen]  = useState(false);
+  const [selectedCode,  setSelectedCode]  = useState(registerFormConfig.defaultValues.countryCode);
+  const [showPw,        setShowPw]        = useState(false);
+  const [showConfirm,   setShowConfirm]   = useState(false);
 
   const {
     register,
@@ -62,42 +57,99 @@ function RegisterContent() {
     mode: "onChange",
   });
 
-  const values = watch();
+  const values      = watch();
   const isStepValid = STEP_FIELDS[step].every((f) => !!values[f] && !errors[f]);
+  // const fullNumber  = `${Number(values.countryCode)}${values.phone}`;
+  const fullNumber  = `${values.phone}`;
 
+  /* ── Request OTP after step 2 ─────────────────────────────────────────── */
+  const handleRequestOtp = async () => {
+    const valid = await trigger(STEP_FIELDS[2]);
+    if (!valid) return;
+    setIsSendingOtp(true);
+    try {
+      const res = await authService.registerRequestOtp({ number: fullNumber });
+      if (res?.success) {
+        setOtpSent(true);
+        setOtpCode("");
+      } 
+    } catch (err: unknown) {
+      toast.error((err as { message?: string })?.message ?? "Failed to send OTP. Please try again.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  /* ── Verify OTP then advance to step 3 ───────────────────────────────── */
+  const handleVerifyOtp = async () => {
+    if (otpCode.length < 6) {
+      toast.error("Please enter the 6-digit OTP.");
+      return;
+    }
+    setIsVerifyingOtp(true);
+    try {
+      const res = await authService.registerVerifyOtp({ number: fullNumber, otp: otpCode });
+      if (res?.success) {
+        setOtpSent(false);
+        router.push(`${ROUTES.REGISTER}?step=3`);
+      } else {
+        toast.error(res?.message ?? "Invalid or expired OTP. Please try again.");
+      }
+    } catch (err: unknown) {
+      toast.error((err as { message?: string })?.message ?? "Invalid or expired OTP. Please try again.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  /* ── Normal step navigation / final submission ────────────────────────── */
   const handleNext = async () => {
     const valid = await trigger(STEP_FIELDS[step]);
     if (!valid) return;
+
+    if (step === 2) {
+      // Trigger OTP flow instead of advancing directly
+      await handleRequestOtp();
+      return;
+    }
+
     if (step < 4) {
       router.push(`${ROUTES.REGISTER}?step=${step + 1}`);
-    } else {
-      setRegistrationData({
-        name: values.name,
-        phone: values.phone,
-        countryCode: values.countryCode,
-        email: values.email,
+      return;
+    }
+
+    // Step 4 — final registration
+    setRegistrationData({
+      name:        values.name,
+      phone:       values.phone,
+      countryCode: values.countryCode,
+      email:       values.email,
+      password:    values.password,
+    });
+    setIsSubmitting(true);
+    try {
+      const res = await authService.register({
+        name:     values.name,
+        number:   fullNumber,
+        email:    values.email,
         password: values.password,
       });
-      setIsSubmitting(true);
-      try {
-        const res = await authService.register({
-          name: values.name,
-          number: `${values.countryCode}${values.phone}`,
-          email: values.email,
-          password: values.password,
-        });
+      if (res?.success) {
         authService.saveTokens(res.data.tokens);
         authService.saveUser(res.data.user);
         router.push(ROUTES.HOME);
-      } catch (err: unknown) {
-        const msg =
-          (err as { message?: string })?.message ?? "Registration failed. Please try again.";
-        toast.error(msg);
-      } finally {
-        setIsSubmitting(false);
+      } else {
+        toast.error(res?.message ?? "Registration failed. Please try again.");
       }
+    } catch (err: unknown) {
+      toast.error((err as { message?: string })?.message ?? "Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  /* ── The dot indicator treats the OTP screen as still on step 2 ───────── */
+  const displayStep = otpSent ? 2 : step;
 
   return (
     <>
@@ -123,11 +175,11 @@ function RegisterContent() {
                 key={s}
                 className="h-1.5 rounded-full transition-all duration-300"
                 style={{
-                  width: s === step ? 24 : 6,
+                  width: s === displayStep ? 24 : 6,
                   background:
-                    s === step
+                    s === displayStep
                       ? "linear-gradient(90deg, #4a9fd5, #e8a020)"
-                      : s < step
+                      : s < displayStep
                         ? "rgba(255,255,255,0.5)"
                         : "rgba(255,255,255,0.2)",
                 }}
@@ -139,7 +191,7 @@ function RegisterContent() {
           <div className="mt-5 w-full">
 
             {/* Step 1 — Name */}
-            {step === 1 && (
+            {step === 1 && !otpSent && (
               <OnboardingInput
                 label="Enter your full name"
                 placeholder="Full name"
@@ -151,7 +203,7 @@ function RegisterContent() {
             )}
 
             {/* Step 2 — Phone */}
-            {step === 2 && (
+            {step === 2 && !otpSent && (
               <div className="relative">
                 <OnboardingInput
                   label="Enter your mobile number"
@@ -167,18 +219,8 @@ function RegisterContent() {
                       className="flex items-center gap-1 text-sm font-medium text-white/80"
                     >
                       {selectedCode}
-                      <svg
-                        className="h-3 w-3 opacity-60"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M19 9l-7 7-7-7"
-                        />
+                      <svg className="h-3 w-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                   }
@@ -195,7 +237,7 @@ function RegisterContent() {
                   >
                     {COUNTRY_CODES.map((c) => (
                       <button
-                        key={c.code}
+                        key={c.iso}
                         type="button"
                         onClick={() => {
                           setSelectedCode(c.code);
@@ -217,8 +259,37 @@ function RegisterContent() {
               </div>
             )}
 
+            {/* Step 2 — OTP verification sub-step */}
+            {otpSent && (
+              <div className="flex flex-col gap-4">
+                <p className="text-center text-sm text-white/60">
+                  We sent a 6-digit code to{" "}
+                  <span className="font-semibold text-white">{fullNumber}</span>
+                </p>
+                <OnboardingInput
+                  label="Enter the 6-digit OTP"
+                  type="text"
+                  placeholder="000000"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                  autoFocus
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                />
+                <button
+                  type="button"
+                  onClick={handleRequestOtp}
+                  disabled={isSendingOtp}
+                  className="text-sm text-sb-blue hover:text-[#6db8e8] disabled:opacity-50"
+                >
+                  {isSendingOtp ? "Sending…" : "Resend OTP"}
+                </button>
+              </div>
+            )}
+
             {/* Step 3 — Email */}
-            {step === 3 && (
+            {step === 3 && !otpSent && (
               <OnboardingInput
                 label="Enter your email id"
                 type="email"
@@ -232,7 +303,7 @@ function RegisterContent() {
             )}
 
             {/* Step 4 — Password */}
-            {step === 4 && (
+            {step === 4 && !otpSent && (
               <div className="flex flex-col gap-6">
                 <OnboardingInput
                   label="Enter password"
@@ -241,11 +312,7 @@ function RegisterContent() {
                   autoComplete="new-password"
                   error={errors.password?.message}
                   rightSlot={
-                    <button
-                      type="button"
-                      onClick={() => setShowPw((p) => !p)}
-                      className="cursor-pointer"
-                    >
+                    <button type="button" onClick={() => setShowPw((p) => !p)} className="cursor-pointer">
                       <EyeIcon open={showPw} />
                     </button>
                   }
@@ -258,18 +325,11 @@ function RegisterContent() {
                   autoComplete="new-password"
                   error={errors.confirmPassword?.message}
                   rightSlot={
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((p) => !p)}
-                      className="cursor-pointer"
-                    >
+                    <button type="button" onClick={() => setShowConfirm((p) => !p)} className="cursor-pointer">
                       <EyeIcon open={showConfirm} />
                     </button>
                   }
-                  {...register(
-                    "confirmPassword",
-                    registerFormConfig.rules.confirmPassword,
-                  )}
+                  {...register("confirmPassword", registerFormConfig.rules.confirmPassword)}
                 />
               </div>
             )}
@@ -278,9 +338,23 @@ function RegisterContent() {
         </div>
       </div>
 
-      <BottomNextButton active={isStepValid && !isSubmitting} onClick={handleNext} loading={isSubmitting}>
-        {step === 4 ? "Create account" : "Next"}
-      </BottomNextButton>
+      {otpSent ? (
+        <BottomNextButton
+          active={otpCode.length === 6 && !isVerifyingOtp}
+          loading={isVerifyingOtp}
+          onClick={handleVerifyOtp}
+        >
+          Verify
+        </BottomNextButton>
+      ) : (
+        <BottomNextButton
+          active={isStepValid && !isSubmitting && !isSendingOtp}
+          loading={isSubmitting || isSendingOtp}
+          onClick={handleNext}
+        >
+          {step === 4 ? "Create account" : "Next"}
+        </BottomNextButton>
+      )}
     </>
   );
 }

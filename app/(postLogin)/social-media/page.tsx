@@ -164,10 +164,10 @@ export default function SocialMediaPage() {
       <div className="flex flex-col gap-4">
         {PLATFORMS.map((platform) => (
           <PlatformCard
-            key={platform?.id}
+            key={platform.id}
             platform={platform}
-            state={connections[platform?.id as PlatformId]}
-            onToggle={() => handleToggle(platform?.id)}
+            state={connections[platform.id as PlatformId]}
+            onToggle={() => handleToggle(platform.id as PlatformId)}
             onChange={() => handleChange(platform)}
           />
         ))}

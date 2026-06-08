@@ -13,6 +13,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Let all proxied backend auth calls pass through — these are unauthenticated
+  // by definition (login, register, forgot-password, OTP, reset-password).
+  if (pathname.startsWith('/api/backend/auth/')) {
+    return NextResponse.next();
+  }
+
   // Read access token from cookies (set by the auth flow for SSR support)
   const token = request.cookies.get(STORAGE_KEYS.ACCESS_TOKEN)?.value;
   const isAuthenticated = Boolean(token);

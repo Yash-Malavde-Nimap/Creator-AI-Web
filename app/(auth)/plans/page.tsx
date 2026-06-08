@@ -38,8 +38,6 @@ export default function PlansPage() {
       },
     };
 
-    console.log("payload", payload);
-
     // Placeholder token — will be replaced with real API response on plan purchase
     const placeholderToken = "placeholder_access_token";
 
@@ -50,8 +48,14 @@ export default function PlansPage() {
       expiresIn: 86400,
     });
 
+    const { name: userName, email: userEmail } = getData();
     setUser({
-      ...getData(),
+      id: "",
+      name: userName,
+      email: userEmail,
+      role: "viewer",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     // Set cookie so the proxy can authenticate SSR requests

@@ -28,6 +28,14 @@ function register(credentials: RegisterCredentials) {
   );
 }
 
+function registerRequestOtp(payload: { number: string }) {
+  return publicRequest.post(API_ENDPOINTS.AUTH.REGISTER_REQUEST_OTP, payload);
+}
+
+function registerVerifyOtp(payload: { number: string; otp: string }) {
+  return publicRequest.post(API_ENDPOINTS.AUTH.REGISTER_VERIFY_OTP, payload);
+}
+
 function forgotPassword(payload: ForgotPasswordPayload) {
   return publicRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD_REQUEST_OTP, payload);
 }
@@ -106,6 +114,8 @@ function isAuthenticated(): boolean {
 export const authService = {
   login,
   register,
+  registerRequestOtp,
+  registerVerifyOtp,
   forgotPassword,
   verifyOtp,
   resetPassword,

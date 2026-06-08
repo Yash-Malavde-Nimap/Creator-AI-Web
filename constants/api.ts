@@ -7,11 +7,12 @@ export const API_ENDPOINTS = {
     REGISTER:                    '/auth/registration',
     LOGOUT:                      '/auth/logout',
     ME:                          '/auth/test',
-    REGISTER_REQUEST_OTP:        '/auth/register/request-otp',
-    REGISTER_VERIFY_OTP:         '/auth/register/verify-otp',
+    REGISTER_REQUEST_OTP:        '/auth/register/whatsapp/request-otp',
+    REGISTER_VERIFY_OTP:         '/auth/register/whatsapp/verify-otp',
     FORGOT_PASSWORD_REQUEST_OTP: '/auth/forgot-password/request-otp',
     FORGOT_PASSWORD_VERIFY_OTP:  '/auth/forgot-password/verify-otp',
     RESET_PASSWORD:              '/auth/reset-password',
+    REFRESH:                     '/auth/refresh',
   },
 
   // Users
